@@ -1,381 +1,382 @@
-# WebView2 para Delphi 7
+# WebView2 for Delphi 7
 
-O **Microsoft Edge WebView2** num controle VCL do **Delphi 7**: o `TWebView2Browser`.
+[Português](README_pt-BR.md)
 
-O Delphi 7 não tem o `TEdgeBrowser` (que só existe a partir do 10.4). Por isso as interfaces COM do
-WebView2 foram declaradas à mão em `WebView2.pas`, a partir do `WebView2.h` do pacote NuGet oficial
-`Microsoft.Web.WebView2`, e embrulhadas no controle.
+**Microsoft Edge WebView2** in a **Delphi 7** VCL control: `TWebView2Browser`.
 
-## Requisitos
+Delphi 7 has no `TEdgeBrowser` (it only exists from 10.4 on). So the WebView2 COM interfaces were
+declared by hand in `WebView2.pas`, from the `WebView2.h` of the official `Microsoft.Web.WebView2`
+NuGet package, and wrapped in the control.
 
-- Delphi 7 (gera executáveis 32 bits).
-- **WebView2 Runtime** instalado. Já vem no Windows 11; no Windows 10 use o instalador "Evergreen":
+## Requirements
+
+- Delphi 7 (produces 32-bit executables).
+- **WebView2 Runtime** installed. It ships with Windows 11; on Windows 10 use the "Evergreen" installer:
   <https://developer.microsoft.com/microsoft-edge/webview2/>
-- **`WebView2Loader.dll` versão x86** na pasta do executável. Está nesta pasta; os `build.bat` dos
-  exemplos a copiam para junto do exe (veja [Origem do `WebView2Loader.dll`](#origem-do-webview2loaderdll)).
+- **`WebView2Loader.dll`, x86 version**, in the executable's folder. It is in this folder; the
+  examples' `build.bat` files copy it next to the exe (see [Origin of `WebView2Loader.dll`](#origin-of-webview2loaderdll)).
 
-Nenhuma biblioteca externa é necessária.
+No external libraries are required.
 
-### Origem do `WebView2Loader.dll`
+### Origin of `WebView2Loader.dll`
 
-A DLL desta pasta é a de `build\native\x86\` do pacote NuGet oficial da Microsoft, sem alterações:
+The DLL in this folder is the one from `build\native\x86\` in Microsoft's official NuGet package, unmodified:
 
 | | |
 |---|---|
-| Pacote | [`Microsoft.Web.WebView2`](https://www.nuget.org/packages/Microsoft.Web.WebView2) **1.0.4258.31** |
-| Caminho no pacote | `build/native/x86/WebView2Loader.dll` |
-| Versão do arquivo | 1.0.4258.31 |
-| Assinatura | Authenticode, `CN=Microsoft Corporation` |
+| Package | [`Microsoft.Web.WebView2`](https://www.nuget.org/packages/Microsoft.Web.WebView2) **1.0.4258.31** |
+| Path in the package | `build/native/x86/WebView2Loader.dll` |
+| File version | 1.0.4258.31 |
+| Signature | Authenticode, `CN=Microsoft Corporation` |
 | SHA-256 | `87C61E2CAE380112C60853E28178B8EA9A0D63739FC03CEAD680D4AD3FDE6B7D` |
 
-Para conferir ou baixar de novo (o `.nupkg` é um zip):
+To verify it or download it again (the `.nupkg` is a zip):
 
 ```powershell
 Invoke-WebRequest https://www.nuget.org/api/v2/package/Microsoft.Web.WebView2/1.0.4258.31 -OutFile webview2.zip
 Expand-Archive webview2.zip webview2
-Get-FileHash webview2\build\native\x86\WebView2Loader.dll        # deve dar o SHA-256 acima
+Get-FileHash webview2\build\native\x86\WebView2Loader.dll        # must match the SHA-256 above
 Get-AuthenticodeSignature webview2\build\native\x86\WebView2Loader.dll
 ```
 
-Para atualizar, troque a versão na URL, copie a DLL nova para esta pasta e atualize esta tabela.
+To update, change the version in the URL, copy the new DLL into this folder and update this table.
 
-## Arquivos
+## Files
 
-| Arquivo | O que é |
+| File | What it is |
 |---|---|
-| `WebView2.pas` | Interfaces COM do WebView2 e carregamento dinâmico do `WebView2Loader.dll` |
-| `WebView2Browser.pas` | `TWebView2Browser`, o controle VCL que hospeda o navegador |
-| `WebView2Loader.dll` | Loader x86 do pacote NuGet oficial |
-| `docs/` | WebResourceRequested ([English](docs/WebResourceRequested.md), [português](docs/WebResourceRequested_pt-BR.md)): interceptação de requisições em detalhe |
-| `Tests/` | Testes DUnit (`run-tests.bat`) |
-| `Examples/Demo/` | Exemplo com todos os recursos do controle (veja abaixo) |
+| `WebView2.pas` | WebView2 COM interfaces and dynamic loading of `WebView2Loader.dll` |
+| `WebView2Browser.pas` | `TWebView2Browser`, the VCL control that hosts the browser |
+| `WebView2Loader.dll` | x86 loader from the official NuGet package |
+| `docs/` | WebResourceRequested ([English](docs/WebResourceRequested.md), [português](docs/WebResourceRequested_pt-BR.md)): request interception in detail |
+| `Tests/` | DUnit tests (`run-tests.bat`) |
+| `Examples/Demo/` | Example with all the control's features (see below) |
 
-Para usar num projeto, adicione `WebView2.pas` e `WebView2Browser.pas` (ou ponha esta pasta no
-*Search path*) e coloque o `WebView2Loader.dll` ao lado do executável.
+To use it in a project, add `WebView2.pas` and `WebView2Browser.pas` (or put this folder in the
+*Search path*) and place `WebView2Loader.dll` next to the executable.
 
-## Exemplo
+## Example
 
-`Examples/Demo/` é um navegador com barra de endereço e um painel para experimentar cada recurso:
-eventos de navegação, bloqueio de URLs, política de novas janelas, `PostWebMessage` /
-`ExecuteScript`, página embutida no exe e uma "API local" com `WebResourceRequested`.
+`Examples/Demo/` is a browser with an address bar and a panel to try each feature:
+navigation events, URL blocking, new-window policy, `PostWebMessage` /
+`ExecuteScript`, a page embedded in the exe and a "local API" with `WebResourceRequested`.
 
-Abra `WebView2Demo.dpr` na IDE, ou pela linha de comando:
+Open `WebView2Demo.dpr` in the IDE, or from the command line:
 
 ```bat
 Examples\Demo\build.bat
 ```
 
-O `build.bat` gera o `WebView2Demo.res` a partir do `.rc` (se ainda não existir), **sempre regera o
-`web.res`** a partir do `web.rc` (os arquivos da pasta `web\`), chama o `dcc32` e copia o
-`WebView2Loader.dll` para a pasta. Se compilar pela IDE depois de mexer em `web\`, rode antes
-`brcc32 web.rc` (ou o `build.bat`). Se o Delphi não estiver em `C:\bin\Borland\Delphi7`, defina a
-variável `DELPHI` antes.
+`build.bat` generates `WebView2Demo.res` from the `.rc` (if it does not exist yet), **always
+regenerates `web.res`** from `web.rc` (the files in the `web\` folder), calls `dcc32` and copies
+`WebView2Loader.dll` into the folder. If you compile from the IDE after changing `web\`, run
+`brcc32 web.rc` first (or `build.bat`). If Delphi is not in `C:\bin\Borland\Delphi7`, set the
+`DELPHI` variable beforehand.
 
-Os fontes (`.pas`, `.dfm`, `.dpr`) estão em **ANSI (cp1252) com CRLF**, como o Delphi 7 espera.
-Não os salve em UTF-8, ou os acentos das strings vão quebrar.
+The sources (`.pas`, `.dfm`, `.dpr`) are in **ANSI (cp1252) with CRLF**, as Delphi 7 expects.
+Do not save them as UTF-8, or accented characters in strings will break.
 
-## Usando o `TWebView2Browser`
+## Using `TWebView2Browser`
 
-O controle é criado em tempo de execução (não é instalado na paleta):
+The control is created at run time (it is not installed on the palette):
 
 ```pascal
 FBrowser := TWebView2Browser.Create(Self);
 FBrowser.Parent := Self;
 FBrowser.Align := alClient;
 FBrowser.OnInitialized := BrowserInitialized;
-FBrowser.CreateWebView;                    // assíncrono: termina em OnInitialized
-FBrowser.Navigate('https://example.com');  // pode ser chamado antes; fica pendente
+FBrowser.CreateWebView;                    // asynchronous: ends in OnInitialized
+FBrowser.Navigate('https://example.com');  // can be called earlier; it stays pending
 ```
 
-### Métodos
+### Methods
 
-| Método | Descrição |
+| Method | Description |
 |---|---|
-| `CreateWebView` | Cria o ambiente e o navegador (assíncrono). Levanta `EWebView2Error` se faltar o loader ou o runtime |
-| `Ready` | `True` depois que o navegador foi criado |
-| `Recreate` | Fecha o WebView e cria outro, voltando à última URL (é o que o `OnProcessFailed` faz quando o browser cai) |
-| `Navigate(Url)` / `NavigateToString(Html)` | Navega para uma URL / carrega HTML direto |
-| `GoBack`, `GoForward`, `Reload`, `Stop` | Navegação |
-| `CanGoBack`, `CanGoForward`, `Source` | Estado da navegação |
-| `ExecuteScript(Js)` | Executa JavaScript; o resultado (JSON) chega em `OnScriptResult` |
-| `AddScriptOnDocumentCreated(Js)` | Script que roda em todo documento novo, antes dos scripts da página. Pode ser chamado antes do `CreateWebView` |
-| `PostWebMessage(Texto)` / `PostWebMessageAsJson(Json)` | Envia uma mensagem para a página |
-| `OpenDevTools` | Abre o DevTools |
-| `NotifyParentWindowPositionChanged` | Chamar no `WM_MOVE` do form, para popups e dropdowns abrirem no lugar certo |
-| `ServeEmbeddedResources(Host)` | Serve os recursos `RCDATA` do exe em `https://<Host>/` (veja abaixo) |
-| `AddWebResourceRequestedFilter(Padrao, [Contexto])` | Faz as URLs que casam com o padrão (curinga `*`) passarem pelo `OnWebResourceRequested` |
-| `RemoveWebResourceRequestedFilter(Padrao, [Contexto])` / `ResourceFilterCount` | Remove um filtro (mesmo padrão e contexto) / quantos há |
-| `EmbeddedUrl(Caminho)` | Monta a URL de um recurso embutido, ex.: `https://app.localhost/index.html` |
+| `CreateWebView` | Creates the environment and the browser (asynchronous). Raises `EWebView2Error` if the loader or the runtime is missing |
+| `Ready` | `True` once the browser has been created |
+| `Recreate` | Closes the WebView and creates another, returning to the last URL (this is what `OnProcessFailed` does when the browser crashes) |
+| `Navigate(Url)` / `NavigateToString(Html)` | Navigates to a URL / loads HTML directly |
+| `GoBack`, `GoForward`, `Reload`, `Stop` | Navigation |
+| `CanGoBack`, `CanGoForward`, `Source` | Navigation state |
+| `ExecuteScript(Js)` | Runs JavaScript; the result (JSON) arrives in `OnScriptResult` |
+| `AddScriptOnDocumentCreated(Js)` | Script that runs in every new document, before the page's scripts. Can be called before `CreateWebView` |
+| `PostWebMessage(Text)` / `PostWebMessageAsJson(Json)` | Sends a message to the page |
+| `OpenDevTools` | Opens DevTools |
+| `NotifyParentWindowPositionChanged` | Call it in the form's `WM_MOVE`, so popups and dropdowns open in the right place |
+| `ServeEmbeddedResources(Host)` | Serves the exe's `RCDATA` resources at `https://<Host>/` (see below) |
+| `AddWebResourceRequestedFilter(Pattern, [Context])` | Makes URLs matching the pattern (`*` wildcard) go through `OnWebResourceRequested` |
+| `RemoveWebResourceRequestedFilter(Pattern, [Context])` / `ResourceFilterCount` | Removes a filter (same pattern and context) / how many there are |
+| `EmbeddedUrl(Path)` | Builds the URL of an embedded resource, e.g. `https://app.localhost/index.html` |
 
-### Propriedades
+### Properties
 
-| Propriedade | Descrição |
+| Property | Description |
 |---|---|
-| `UserDataFolder` | Pasta de cache/cookies. Padrão: `%LOCALAPPDATA%\<nome do exe>\WebView2` |
-| `Language` | Idioma da interface do WebView2 e do `Accept-Language`, ex.: `'pt-BR'`. Antes do `CreateWebView` |
-| `AdditionalBrowserArguments` | Argumentos do Chromium, ex.: `'--disable-gpu'`. Antes do `CreateWebView` |
-| `WebView` / `Controller` | As interfaces COM, para o que o controle não embrulha |
+| `UserDataFolder` | Cache/cookies folder. Default: `%LOCALAPPDATA%\<exe name>\WebView2` |
+| `Language` | WebView2 UI language and `Accept-Language`, e.g. `'pt-BR'`. Before `CreateWebView` |
+| `AdditionalBrowserArguments` | Chromium arguments, e.g. `'--disable-gpu'`. Before `CreateWebView` |
+| `WebView` / `Controller` | The COM interfaces, for whatever the control does not wrap |
 
-### Eventos
+### Events
 
-| Evento | Quando |
+| Event | When |
 |---|---|
-| `OnInitialized(ErrorCode)` | O navegador foi criado (ou falhou: `ErrorCode` é o HRESULT) |
-| `OnNavigationStarting(Uri, IsUserInitiated, IsRedirected, var Cancel)` | Antes de cada navegação. `Cancel := True` impede o carregamento |
-| `OnNavigationCompleted(Success, WebErrorStatus)` | A navegação terminou |
-| `OnNewWindowRequested(Uri, IsUserInitiated, var Action)` | A página pediu uma nova janela (`target="_blank"`, `window.open`). `Action` decide o que acontece |
-| `OnSourceChanged(Url)` | A URL atual mudou |
-| `OnTitleChanged(Titulo)` | O `document.title` mudou |
-| `OnWebMessageReceived(Msg)` | A página chamou `chrome.webview.postMessage(...)` |
-| `OnWebMessageJson(Json, Source, var Handled)` | Antes do anterior: a mensagem como JSON e a URL de origem. `Handled := True` o suprime. Útil para implementar um protocolo |
-| `OnAcceleratorKeyPressed(KeyEventKind, VirtualKey, var Handled)` | Uma tecla com o foco na página, antes de ela chegar ao JS (o teclado vai direto para o processo do WebView2, e a VCL não a vê). `KeyEventKind`: `COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN`, `_KEY_UP`, `_SYSTEM_KEY_DOWN`, `_SYSTEM_KEY_UP`. `Handled := True` impede a página de receber a tecla. Serve para atalhos de menu |
-| `OnScriptResult(ErrorCode, ResultJson)` | Resultado de um `ExecuteScript` |
-| `OnWebResourceRequested(Request, Response, var Handled)` | Uma requisição casou com um filtro. `Handled := True` responde com `Response`; senão ela segue para a rede |
-| `OnProcessFailed(Kind, var Action)` | Um processo do WebView2 caiu ou travou. `Action` já vem com o padrão (veja [Robustez](#robustez)) |
-| `OnCallbackError(E)` | Uma exceção num dos eventos acima. Sem handler, vai para o tratador padrão da aplicação |
+| `OnInitialized(ErrorCode)` | The browser was created (or failed: `ErrorCode` is the HRESULT) |
+| `OnNavigationStarting(Uri, IsUserInitiated, IsRedirected, var Cancel)` | Before each navigation. `Cancel := True` prevents loading |
+| `OnNavigationCompleted(Success, WebErrorStatus)` | The navigation finished |
+| `OnNewWindowRequested(Uri, IsUserInitiated, var Action)` | The page asked for a new window (`target="_blank"`, `window.open`). `Action` decides what happens |
+| `OnSourceChanged(Url)` | The current URL changed |
+| `OnTitleChanged(Title)` | `document.title` changed |
+| `OnWebMessageReceived(Msg)` | The page called `chrome.webview.postMessage(...)` |
+| `OnWebMessageJson(Json, Source, var Handled)` | Before the previous one: the message as JSON and the source URL. `Handled := True` suppresses it. Useful for implementing a protocol |
+| `OnAcceleratorKeyPressed(KeyEventKind, VirtualKey, var Handled)` | A key pressed while the page has focus, before it reaches the JS (the keyboard goes straight to the WebView2 process, and the VCL does not see it). `KeyEventKind`: `COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN`, `_KEY_UP`, `_SYSTEM_KEY_DOWN`, `_SYSTEM_KEY_UP`. `Handled := True` stops the page from receiving the key. Useful for menu shortcuts |
+| `OnScriptResult(ErrorCode, ResultJson)` | Result of an `ExecuteScript` |
+| `OnWebResourceRequested(Request, Response, var Handled)` | A request matched a filter. `Handled := True` answers with `Response`; otherwise it goes on to the network |
+| `OnProcessFailed(Kind, var Action)` | A WebView2 process crashed or hung. `Action` comes with the default already set (see [Robustness](#robustness)) |
+| `OnCallbackError(E)` | An exception in one of the events above. Without a handler, it goes to the application's default handler |
 
-#### Filtrando navegações com `OnNavigationStarting`
+#### Filtering navigations with `OnNavigationStarting`
 
 ```pascal
-procedure TfrmPrincipal.BrowserNavigationStarting(Sender: TObject; const Uri: WideString;
+procedure TfrmMain.BrowserNavigationStarting(Sender: TObject; const Uri: WideString;
   IsUserInitiated, IsRedirected: Boolean; var Cancel: Boolean);
 begin
-  Cancel := Pos('bloqueado', LowerCase(Uri)) > 0;
+  Cancel := Pos('blocked', LowerCase(Uri)) > 0;
 end;
 ```
 
-Uma navegação cancelada **ainda dispara `OnNavigationCompleted`**, com `Success = False` e
-`WebErrorStatus = COREWEBVIEW2_WEB_ERROR_STATUS_OPERATION_CANCELED` (14). Não trate esse código
-como erro.
+A cancelled navigation **still fires `OnNavigationCompleted`**, with `Success = False` and
+`WebErrorStatus = COREWEBVIEW2_WEB_ERROR_STATUS_OPERATION_CANCELED` (14). Do not treat this code
+as an error.
 
-#### Controlando novas janelas com `OnNewWindowRequested`
+#### Controlling new windows with `OnNewWindowRequested`
 
-Sem tratamento, o WebView2 abre links `target="_blank"` e `window.open()` numa janela popup
-própria, fora do controle da aplicação. O evento permite escolher outro comportamento pelo
-parâmetro `Action`:
+Unhandled, WebView2 opens `target="_blank"` links and `window.open()` in its own popup window,
+outside the application's control. The event lets you choose another behavior through the
+`Action` parameter:
 
-| `Action` | Efeito |
+| `Action` | Effect |
 |---|---|
-| `nwaPopup` (padrão) | O WebView2 abre a janela popup dele |
-| `nwaSameWindow` | Navega para a URL no próprio `TWebView2Browser` |
-| `nwaCancel` | Não abre nada. Use quando o próprio handler cuidar da URL |
+| `nwaPopup` (default) | WebView2 opens its own popup window |
+| `nwaSameWindow` | Navigates to the URL in the `TWebView2Browser` itself |
+| `nwaCancel` | Opens nothing. Use it when the handler takes care of the URL itself |
 
 ```pascal
-procedure TfrmPrincipal.BrowserNewWindowRequested(Sender: TObject; const Uri: WideString;
+procedure TfrmMain.BrowserNewWindowRequested(Sender: TObject; const Uri: WideString;
   IsUserInitiated: Boolean; var Action: TWV2NewWindowAction);
 begin
-  // abrir no navegador padrão do Windows
+  // open in the Windows default browser
   Action := nwaCancel;
   ShellExecute(Handle, 'open', PChar(string(Uri)), nil, nil, SW_SHOWNORMAL);
 end;
 ```
 
-Com `nwaSameWindow`, a navegação passa normalmente pelo `OnNavigationStarting`, então os filtros
-continuam valendo.
+With `nwaSameWindow`, the navigation goes through `OnNavigationStarting` as usual, so filters
+still apply.
 
-## Página embutida no executável
+## Page embedded in the executable
 
-O HTML, CSS, JS e imagens da interface ficam **dentro do `.exe`**, como recursos `RCDATA`. Basta
-distribuir o executável e o `WebView2Loader.dll`.
+The interface's HTML, CSS, JS and images live **inside the `.exe`**, as `RCDATA` resources. You
+only need to distribute the executable and `WebView2Loader.dll`.
 
-O controle cria um host virtual e intercepta as requisições a ele (`WebResourceRequested`),
-respondendo com o conteúdo dos recursos:
+The control creates a virtual host and intercepts requests to it (`WebResourceRequested`),
+answering with the contents of the resources:
 
 ```pascal
-FBrowser.ServeEmbeddedResources('app.localhost');          // antes ou depois do CreateWebView
+FBrowser.ServeEmbeddedResources('app.localhost');          // before or after CreateWebView
 FBrowser.CreateWebView;
 FBrowser.Navigate(FBrowser.EmbeddedUrl('index.html')); // https://app.localhost/index.html
 ```
 
-Como tudo é servido por URL, a página usa caminhos relativos normalmente
-(`<link href="style.css">`, `<script src="app.js">`, `<img src="img/logo.svg">`) e roda numa
-origem `https://`, então APIs que exigem contexto seguro funcionam.
+Since everything is served by URL, the page uses relative paths as usual
+(`<link href="style.css">`, `<script src="app.js">`, `<img src="img/logo.svg">`) and runs in an
+`https://` origin, so APIs that require a secure context work.
 
-**Nome do recurso:** o caminho da URL em maiúsculas, com tudo que não for letra ou dígito trocado
-por `_`. A raiz (`/`) serve `INDEX_HTML`.
+**Resource name:** the URL path in uppercase, with everything that is not a letter or digit
+replaced by `_`. The root (`/`) serves `INDEX_HTML`.
 
-| URL | Recurso no `web.rc` |
+| URL | Resource in `web.rc` |
 |---|---|
 | `https://app.localhost/index.html` | `INDEX_HTML RCDATA "web\\index.html"` |
 | `https://app.localhost/style.css` | `STYLE_CSS RCDATA "web\\style.css"` |
 | `https://app.localhost/img/logo.svg` | `IMG_LOGO_SVG RCDATA "web\\img\\logo.svg"` |
 
-Para adicionar um arquivo: coloque-o em `web\`, acrescente a linha no `web.rc` e recompile.
-O `Content-Type` sai pela extensão (html, css, js, json, svg, png, jpg, gif, ico, woff2). Um
-caminho sem recurso correspondente recebe **404**, o que dispara `OnNavigationCompleted` com
-`Success = False` se for a página principal.
+To add a file: put it in `web\`, add the line to `web.rc` and recompile.
+The `Content-Type` is chosen by extension (html, css, js, json, svg, png, jpg, gif, ico, woff2). A
+path with no matching resource gets **404**, which fires `OnNavigationCompleted` with
+`Success = False` if it is the main page.
 
-Limitações: o nome do recurso só tem letras e dígitos ASCII, então acentos e espaços viram `_` e
-nomes diferentes podem colidir. Prefira nomes simples, em ASCII.
+Limitations: the resource name only has ASCII letters and digits, so accented characters and
+spaces become `_` and different names may collide. Prefer simple, ASCII names.
 
-## Interceptando requisições: `OnWebResourceRequested`
+## Intercepting requests: `OnWebResourceRequested`
 
-O evento recebe as requisições que casam com algum filtro: os registrados com
-`AddWebResourceRequestedFilter` e o host do `ServeEmbeddedResources`, que já é filtrado
-automaticamente. Ele roda **antes** do servidor de recursos embutidos, então dá para criar uma
-"API local" no mesmo host, sem servidor HTTP:
+The event receives requests that match some filter: those registered with
+`AddWebResourceRequestedFilter` and the `ServeEmbeddedResources` host, which is filtered
+automatically. It runs **before** the embedded-resources server, so you can build a
+"local API" on the same host, with no HTTP server:
 
 ```pascal
-procedure TfrmPrincipal.BrowserWebResourceRequested(Sender: TObject;
+procedure TfrmMain.BrowserWebResourceRequested(Sender: TObject;
   Request: TWV2WebResourceRequest; Response: TWV2WebResourceResponse; var Handled: Boolean);
 begin
-  if Request.Path = 'api/clientes' then
+  if Request.Path = 'api/customers' then
   begin
-    Response.SetJson('[{"id":1,"nome":"Padaria São João"}]');
+    Response.SetJson('[{"id":1,"name":"São João Bakery"}]');
     Handled := True;
   end;
-  // Handled = False: segue para os recursos embutidos (ou para a rede)
+  // Handled = False: goes on to the embedded resources (or the network)
 end;
 ```
 
 ```js
-fetch('api/clientes').then(r => r.json()).then(console.log);
+fetch('api/customers').then(r => r.json()).then(console.log);
 ```
 
-**`TWV2WebResourceRequest`** (válido só durante o evento):
+**`TWV2WebResourceRequest`** (valid only during the event):
 
-| Membro | Descrição |
+| Member | Description |
 |---|---|
-| `Uri`, `Method` | URL completa e método HTTP |
-| `Path` / `RawPath` | `https://app.localhost/a%20b/x?q=1` → `a b/x` (decodificado, UTF-8) / `a%20b/x` (como veio) |
-| `QueryParam(Nome)`, `HasQueryParam(Nome)` | Valor decodificado de um parâmetro (`+` vira espaço) |
-| `Query` | A query inteira, **sem** decodificar (decodificar tudo junto quebraria `%26` e `%3D`) |
-| `GetHeader(Nome)` | Lê um header da requisição |
-| `SetHeader(Nome, Valor)`, `RemoveHeader(Nome)` | Alteram a requisição **que segue para a rede**, ex.: injetar `Authorization` |
-| `Content` / `ContentText` | Corpo (POST/PUT): bytes brutos / texto decodificado de UTF-8 |
-| `ResourceContext` | Tipo do recurso (`COREWEBVIEW2_WEB_RESOURCE_CONTEXT_*`) |
+| `Uri`, `Method` | Full URL and HTTP method |
+| `Path` / `RawPath` | `https://app.localhost/a%20b/x?q=1` → `a b/x` (decoded, UTF-8) / `a%20b/x` (as received) |
+| `QueryParam(Name)`, `HasQueryParam(Name)` | Decoded value of a parameter (`+` becomes a space) |
+| `Query` | The whole query, **not** decoded (decoding it all at once would break `%26` and `%3D`) |
+| `GetHeader(Name)` | Reads a request header |
+| `SetHeader(Name, Value)`, `RemoveHeader(Name)` | Change the request **that goes on to the network**, e.g. inject `Authorization` |
+| `Content` / `ContentText` | Body (POST/PUT): raw bytes / text decoded from UTF-8 |
+| `ResourceContext` | Resource type (`COREWEBVIEW2_WEB_RESOURCE_CONTEXT_*`) |
 
-**`TWV2WebResourceResponse`** (começa como `200 OK`, vazia):
+**`TWV2WebResourceResponse`** (starts as `200 OK`, empty):
 
-| Membro | Descrição |
+| Member | Description |
 |---|---|
-| `StatusCode`, `ReasonPhrase` | Status HTTP |
-| `SetText(Texto, [ContentType])`, `SetJson(Json)` | Conteúdo em UTF-8, com `charset=utf-8` |
-| `SetData`, `LoadFromStream`, `LoadFromFile` | Conteúdo binário. `LoadFromFile` deduz o `Content-Type` pela extensão |
-| `SetHeader(Nome, Valor)` / `Headers` | Headers da resposta |
-| `Defer` / `Complete` | Responder depois (veja abaixo) |
+| `StatusCode`, `ReasonPhrase` | HTTP status |
+| `SetText(Text, [ContentType])`, `SetJson(Json)` | UTF-8 content, with `charset=utf-8` |
+| `SetData`, `LoadFromStream`, `LoadFromFile` | Binary content. `LoadFromFile` infers the `Content-Type` from the extension |
+| `SetHeader(Name, Value)` / `Headers` | Response headers |
+| `Defer` / `Complete` | Answer later (see below) |
 
-**Resposta adiada:** para responder depois (ex.: quando uma consulta terminar), chame
-`Response.Defer`, marque `Handled := True`, guarde a resposta e chame `Response.Complete` mais
-tarde, **na thread da interface**. Depois do `Complete` o objeto é liberado. O `Request` não vive
-além do evento, então copie antes o que precisar dele.
+**Deferred response:** to answer later (e.g. when a query finishes), call
+`Response.Defer`, set `Handled := True`, keep the response and call `Response.Complete` later,
+**on the UI thread**. After `Complete` the object is released. The `Request` does not outlive
+the event, so copy what you need from it first.
 
 ```pascal
-if Request.Path = 'relatorio' then
+if Request.Path = 'report' then
 begin
   Response.Defer;
   Handled := True;
-  FPendentes.Add(Response);   // um timer, ou o fim de uma thread (via Synchronize), chama:
-end;                          //   Response.SetJson(...); Response.Complete;
+  FPending.Add(Response);   // a timer, or the end of a thread (via Synchronize), calls:
+end;                        //   Response.SetJson(...); Response.Complete;
 ```
 
-Uma exceção dentro do evento não escapa para o WebView2: ela vira uma resposta **500** com a
-mensagem. Para interceptar outro domínio, registre o filtro antes, por exemplo
-`FBrowser.AddWebResourceRequestedFilter('https://api.exemplo.com/*')`. Referência completa,
-receitas e limitações em [docs/WebResourceRequested_pt-BR.md](docs/WebResourceRequested_pt-BR.md) ([English](docs/WebResourceRequested.md)).
+An exception inside the event does not escape to WebView2: it becomes a **500** response with the
+message. To intercept another domain, register the filter first, for example
+`FBrowser.AddWebResourceRequestedFilter('https://api.example.com/*')`. Full reference,
+recipes and limitations in [docs/WebResourceRequested.md](docs/WebResourceRequested.md) ([Português](docs/WebResourceRequested_pt-BR.md)).
 
-## Ponte Delphi ↔ JavaScript
+## Delphi ↔ JavaScript bridge
 
-Troca de mensagens simples entre a página e o Delphi. Para comandos com Promise, erros e eventos,
-monte o seu próprio protocolo sobre `OnWebMessageJson`.
+Simple message passing between the page and Delphi. For commands with Promises, errors and events,
+build your own protocol on top of `OnWebMessageJson`.
 
-Da página para o Delphi:
+From the page to Delphi:
 
 ```js
-window.chrome.webview.postMessage('hora');              // chega como texto
-window.chrome.webview.postMessage({ acao: 'salvar' });  // chega como JSON
+window.chrome.webview.postMessage('time');              // arrives as text
+window.chrome.webview.postMessage({ action: 'save' });  // arrives as JSON
 ```
 
-Do Delphi para a página:
+From Delphi to the page:
 
 ```pascal
-FBrowser.PostWebMessage('Olá do Delphi');   // chega em event.data
-FBrowser.ExecuteScript('somar(20, 22)');    // OnScriptResult recebe '42'
+FBrowser.PostWebMessage('Hello from Delphi');   // arrives in event.data
+FBrowser.ExecuteScript('add(20, 22)');          // OnScriptResult receives '42'
 ```
 
 ```js
 window.chrome.webview.addEventListener('message', function (e) { console.log(e.data); });
 ```
 
-## Robustez
+## Robustness
 
-**Exceções nos eventos:** nenhuma exceção escapa de um callback para o WebView2. Uma exceção num
-evento do controle (`OnNavigationStarting`, `OnTitleChanged`...) vai para o `OnCallbackError`;
-sem handler, vai para o tratador padrão da aplicação (o diálogo de erro da VCL). Assim o
-WebView2 não é desestabilizado e a navegação continua. No `OnWebResourceRequested`, a exceção vira
-uma resposta 500.
+**Exceptions in events:** no exception escapes from a callback into WebView2. An exception in a
+control event (`OnNavigationStarting`, `OnTitleChanged`...) goes to `OnCallbackError`;
+without a handler, it goes to the application's default handler (the VCL error dialog). This way
+WebView2 is not destabilized and navigation continues. In `OnWebResourceRequested`, the exception
+becomes a 500 response.
 
-**Queda de processo (`OnProcessFailed`):** o WebView2 roda em processos separados que podem cair.
-O evento recebe o tipo (`COREWEBVIEW2_PROCESS_FAILED_KIND_*`) e uma ação já preenchida com o
-padrão:
+**Process crash (`OnProcessFailed`):** WebView2 runs in separate processes that can crash.
+The event receives the kind (`COREWEBVIEW2_PROCESS_FAILED_KIND_*`) and an action already filled in
+with the default:
 
-| Queda | Ação padrão | Efeito |
+| Failure | Default action | Effect |
 |---|---|---|
-| Browser (`..._BROWSER_PROCESS_EXITED`) | `pfaRecreate` | Recria o WebView (fora do callback) e volta à última URL. Filtros, scripts e opções são reaplicados |
-| Renderer (`..._RENDER_PROCESS_EXITED`) | `pfaReload` | Recarrega a página |
-| Outros (travamento, GPU, utilitários, frames) | `pfaNone` | Nada: o WebView2 se recupera sozinho, ou o app decide |
+| Browser (`..._BROWSER_PROCESS_EXITED`) | `pfaRecreate` | Recreates the WebView (outside the callback) and returns to the last URL. Filters, scripts and options are reapplied |
+| Renderer (`..._RENDER_PROCESS_EXITED`) | `pfaReload` | Reloads the page |
+| Others (hang, GPU, utilities, frames) | `pfaNone` | Nothing: WebView2 recovers on its own, or the app decides |
 
 ```pascal
 procedure TForm1.BrowserProcessFailed(Sender: TObject; Kind: Integer; var Action: TWV2ProcessFailedAction);
 begin
-  Log(Format('processo do WebView2 caiu (tipo %d)', [Kind]));
+  Log(Format('WebView2 process failed (kind %d)', [Kind]));
   if Kind = COREWEBVIEW2_PROCESS_FAILED_KIND_RENDER_PROCESS_UNRESPONSIVE then
-    Action := pfaReload;  { recarrega também quando a página trava }
+    Action := pfaReload;  { also reloads when the page hangs }
 end;
 ```
 
-Não abra janelas modais dentro deste (nem de outro) evento do WebView2: poste uma mensagem e
-pergunte ao usuário depois que o callback retornar.
+Do not open modal windows inside this (or any other) WebView2 event: post a message and
+ask the user after the callback returns.
 
-**Recriação do handle:** trocar o `Parent` do controle, mudar o `BorderStyle` do form e outras
-operações da VCL destroem e recriam o handle da janela. A janela do WebView2 é filha desse
-handle e morreria junto. O controle "estaciona" o WebView numa janela oculta durante a troca e o
-devolve ao novo handle, sem recarregar a página.
+**Handle recreation:** changing the control's `Parent`, changing the form's `BorderStyle` and other
+VCL operations destroy and recreate the window handle. The WebView2 window is a child of that
+handle and would die with it. The control "parks" the WebView in a hidden window during the switch
+and gives it back to the new handle, without reloading the page.
 
-**Liberação:** ao destruir o controle (ou no `Recreate`), os handlers são removidos com os tokens
-(`remove_*`), o controller é fechado, e callbacks tardios do WebView antigo são ignorados.
+**Release:** when the control is destroyed (or on `Recreate`), the handlers are removed with their
+tokens (`remove_*`), the controller is closed, and late callbacks from the old WebView are ignored.
 
-## Testes
+## Tests
 
 ```bat
 Tests\run-tests.bat
 ```
 
-28 testes DUnit das partes que não precisam do runtime: requisição e resposta interceptadas (com
-uma `ICoreWebView2WebResourceRequest` falsa), decodificação de URL e de query, MIME, nomes de
-recurso, opções do ambiente e o controle antes do `CreateWebView`. Precisa do DUnit (variável
-`DUNIT`, padrão `C:\dev\lib\dunit\src`).
+28 DUnit tests of the parts that do not need the runtime: intercepted request and response (with
+a fake `ICoreWebView2WebResourceRequest`), URL and query decoding, MIME, resource names,
+environment options and the control before `CreateWebView`. Requires DUnit (`DUNIT` variable,
+default `C:\dev\lib\dunit\src`).
 
-O que depende do runtime (queda de processo, recriação do handle, resposta adiada, `Language` e
-`AdditionalBrowserArguments`, proteção dos callbacks) foi verificado com um app de integração
-usando o protocolo do DevTools, inclusive derrubando de propósito o renderer e o processo
-browser.
+What depends on the runtime (process crash, handle recreation, deferred response, `Language` and
+`AdditionalBrowserArguments`, callback protection) was verified with an integration app
+using the DevTools protocol, including deliberately killing the renderer and the browser process.
 
-## Armadilhas do Delphi 7 com o WebView2
+## Delphi 7 pitfalls with WebView2
 
-1. **BOOL vale `-1`.** Em Delphi, `LongBool(True)` é `-1`, mas o WebView2 compara com `TRUE` (1)
-   e trata `-1` como falso. Na primeira versão, `put_IsScriptEnabled(True)` *desligou* o
-   JavaScript. Todo parâmetro BOOL **de entrada** usa o tipo `WV2BOOL` (Integer) e deve receber
-   `BoolToWV2(...)`. Parâmetros de saída podem continuar como `BOOL`.
-2. **Exceções de ponto flutuante.** O Chromium espera essas exceções mascaradas. O
-   `WebView2Browser.pas` chama `Set8087CW($133F)` na inicialização; sem isso aparecem erros
-   "Invalid floating point operation" aleatórios.
-3. **Callbacks sem métodos anônimos.** Cada callback é uma pequena classe `TInterfacedObject` que
-   repassa a chamada ao controle. No `Destroy` do controle elas são desligadas, para que um
-   callback tardio não acesse um objeto já liberado.
-4. **Ordem da vtable.** Em `WebView2.pas` a ordem dos métodos de cada interface é a ordem da
-   vtable. Não remova nem reordene métodos, mesmo os não usados; eles estão lá para ocupar o slot.
-5. **Apartment STA.** O `ComObj` está no `uses` para que o `Application.Initialize` chame
+1. **BOOL is `-1`.** In Delphi, `LongBool(True)` is `-1`, but WebView2 compares against `TRUE` (1)
+   and treats `-1` as false. In the first version, `put_IsScriptEnabled(True)` *turned off*
+   JavaScript. Every **input** BOOL parameter uses the `WV2BOOL` type (Integer) and must receive
+   `BoolToWV2(...)`. Output parameters can stay as `BOOL`.
+2. **Floating-point exceptions.** Chromium expects these exceptions to be masked.
+   `WebView2Browser.pas` calls `Set8087CW($133F)` at initialization; without it, random
+   "Invalid floating point operation" errors appear.
+3. **Callbacks without anonymous methods.** Each callback is a small `TInterfacedObject` class that
+   forwards the call to the control. In the control's `Destroy` they are detached, so that a
+   late callback does not touch an already freed object.
+4. **vtable order.** In `WebView2.pas` the order of each interface's methods is the order of the
+   vtable. Do not remove or reorder methods, even unused ones; they are there to occupy the slot.
+5. **STA apartment.** `ComObj` is in the `uses` clause so that `Application.Initialize` calls
    `CoInitialize`.
-6. **Strings.** Strings devolvidas pelo WebView2 (`LPWSTR*`) precisam ser liberadas com
-   `CoTaskMemFree`; use `TakeCoTaskString`. Já o `LPCWSTR` recebido em `ExecuteScript` pertence ao
-   WebView2: copie, não libere.
+6. **Strings.** Strings returned by WebView2 (`LPWSTR*`) must be freed with
+   `CoTaskMemFree`; use `TakeCoTaskString`. The `LPCWSTR` received in `ExecuteScript`, however,
+   belongs to WebView2: copy it, do not free it.
 
-## Limitações
+## Limitations
 
-- Só um subconjunto da API está declarado. Para usar outro recurso, declare a interface em
-  `WebView2.pas` conferindo a ordem dos métodos no `WebView2.h`.
-- Apenas 32 bits (limite do Delphi 7).
-- `Response.Complete` (resposta adiada) precisa ser chamado na thread da interface.
-- Respostas adiadas ainda pendentes quando o WebView é liberado ou recriado são descartadas; não
-  chame `Complete` nelas depois disso.
+- Only a subset of the API is declared. To use another feature, declare the interface in
+  `WebView2.pas`, checking the method order in `WebView2.h`.
+- 32-bit only (a Delphi 7 limit).
+- `Response.Complete` (deferred response) must be called on the UI thread.
+- Deferred responses still pending when the WebView is released or recreated are discarded; do not
+  call `Complete` on them after that.
