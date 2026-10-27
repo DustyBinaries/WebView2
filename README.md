@@ -116,6 +116,9 @@ FBrowser.Navigate('https://example.com');  // can be called earlier; it stays pe
 | `UserDataFolder` | Cache/cookies folder. Default: `%LOCALAPPDATA%\<exe name>\WebView2` |
 | `Language` | WebView2 UI language and `Accept-Language`, e.g. `'pt-BR'`. Before `CreateWebView` |
 | `AdditionalBrowserArguments` | Chromium arguments, e.g. `'--disable-gpu'`. Before `CreateWebView` |
+| `DevToolsEnabled` | `False`: no DevTools (F12, Ctrl+Shift+I, "Inspect"). Default `True`. Before `CreateWebView` |
+| `ContextMenusEnabled` | `False`: no default WebView2 context menu (right-click). Default `True`. Before `CreateWebView` |
+| `ZoomControlEnabled` | `False`: the user cannot zoom (Ctrl+wheel, Ctrl+`+`/`-`). Default `True`. Before `CreateWebView` |
 | `WebView` / `Controller` | The COM interfaces, for whatever the control does not wrap |
 
 ### Events
